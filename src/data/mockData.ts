@@ -16,4 +16,11 @@ const personalDocuments = [
   { id: "p3", name: "Tax Documents", type: "folder" },
 ];
 
-export { rootFiles, workDocuments, personalDocuments };
+const getFilesForPath = (path: string) => {
+  if (path === "") return rootFiles;
+  if (path === "Work Documents") return workDocuments;
+  if (path === "Personal Documents") return personalDocuments;
+  return [];
+};
+
+export { rootFiles, workDocuments, personalDocuments, getFilesForPath };

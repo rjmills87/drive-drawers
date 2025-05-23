@@ -4,11 +4,21 @@ type FileItemProps = {
     name: string;
     type: string;
   };
+  onFolderClick?: (folderName: string) => void;
 };
 
-export default function FileItem({ file }: FileItemProps) {
+export default function FileItem({ file, onFolderClick }: FileItemProps) {
+  const handleClick = () => {
+    if (file.type === "folder" && onFolderClick) {
+      onFolderClick(file.name);
+    }
+  };
+
   return (
-    <div className="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+    <div
+      className="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer"
+      onClick={handleClick}
+    >
       <div className="mr-3">
         {file.type === "folder" ? (
           <svg
