@@ -1,5 +1,6 @@
 import "./App.css";
 import { useState } from "react";
+import Header from "./components/Header";
 import ServiceSelector from "./components/ServiceSelector";
 import ActionBar from "./components/ActionBar";
 import FileList from "./components/FileList";
@@ -25,9 +26,7 @@ function App() {
   return (
     <div className="w-[400px] h-[500px] flex flex-col bg-gray-50">
       {/* Header */}
-      <header className="bg-teal-600 text-white p-4 shadow-md">
-        <h1 className="text-xl font-bold">Drive Drawers</h1>
-      </header>
+      <Header />
       {/* Service Selection */}
       <ServiceSelector />
       {/* Main Content Area */}
