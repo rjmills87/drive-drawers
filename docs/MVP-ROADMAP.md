@@ -4,11 +4,11 @@ This roadmap outlines the development phases for the Drive Drawers Chrome extens
 
 ## Phase 1: Foundation & Basic Structure
 
-- [ ] Set up project structure and development environment
-- [ ] Create manifest.json with basic permissions
+- [x] Set up project structure and development environment
+- [x] Create manifest.json with basic permissions
 - [ ] Implement basic popup UI structure
-- [ ] Create background script foundation
-- [ ] Set up content script infrastructure
+- [x] Create background script foundation
+- [x] Set up content script infrastructure
 - [ ] Implement basic extension options page
 
 ## Phase 2: Single Cloud Service Integration (Google Drive)
