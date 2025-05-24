@@ -10,7 +10,6 @@ export default function FileList({
   files = rootFiles,
   onFolderClick,
 }: FileListProps) {
-  // Added default value
   return (
     <div className="space-y-2">
       {files.map((file) => (

@@ -9,10 +9,9 @@ import Loading from "./components/Loading";
 import Breadcrumb from "./components/Breadcrumb";
 
 function App() {
-  // Loading state
+
   const [isLoading] = useState<boolean>(false);
 
-  // File Path State
   const [currentPath, setCurrentPath] = useState<string>("");
 
   const navigateToFolder = (folderName: string) => {
