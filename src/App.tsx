@@ -1,4 +1,3 @@
-import "./App.css";
 import { useState } from "react";
 import { getFilesForPath } from "./data/mockData";
 import Header from "./components/Header";
@@ -9,7 +8,6 @@ import Loading from "./components/Loading";
 import Breadcrumb from "./components/Breadcrumb";
 
 function App() {
-
   const [isLoading] = useState<boolean>(false);
 
   const [currentPath, setCurrentPath] = useState<string>("");
