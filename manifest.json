@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Drive Drawers",
+  "version": "0.1.0",
+  "description": "A unified interface for managing files across multiple cloud storage services",
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["storage", "identity", "contextMenus", "activeTab"],
+  "host_permissions": [
+    "https://*.google.com/*",
+    "https://*.googleapis.com/*",
+    "https://*.microsoft.com/*",
+    "https://*.dropboxapi.com/*"
+  ],
+  "oauth2": {
+    "client_id": "798546693028-80r9hjrtsud5b18ighq0n3fb6fcook9s.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.readonly",
+      "https://www.googleapis.com/auth/drive.file"
+    ]
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}
