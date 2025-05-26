@@ -11,4 +11,11 @@ const CloudService = {
   DROPBOX: "dropbox",
 };
 
-export { StorageKeys, CloudService };
+const MessageType = {
+  AUTHENTICATE: "authenticate",
+  CHECK_AUTH: "check_auth",
+  SIGN_OUT: "sign_out",
+  GET_FILES: "get_files",
+};
+
+export { StorageKeys, CloudService, MessageType };

@@ -13,6 +13,7 @@ class GoogleDriveAuthService {
   public async initialize(): Promise<void> {
     await this.loadTokenFromStorage();
   }
+
   //   Load token from Chrome storage
   private async loadTokenFromStorage(): Promise<void> {
     return new Promise((resolve) => {
