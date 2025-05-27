@@ -13,7 +13,7 @@ This roadmap outlines the development phases for the Drive Drawers Chrome extens
 
 ## Phase 2: Single Cloud Service Integration (Google Drive)
 
-- [ ] Implement OAuth authentication for Google Drive
+- [x] Implement OAuth authentication for Google Drive
 - [ ] Create service for fetching files and folders from Google Drive
 - [ ] Build UI components to display files and folders
 - [ ] Implement file navigation (browsing folders)
