@@ -28,7 +28,7 @@ chrome.runtime.onStartup.addListener(() => {
 });
 
 // Message Handling
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === MessageType.AUTHENTICATE) {
     googleDriveAuth
       .authenticate()
