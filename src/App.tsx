@@ -12,7 +12,7 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentPath, setCurrentPath] = useState<string>("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [selectedService, setSelectedServices] = useState<string>(
+  const [selectedService, setSelectedService] = useState<string>(
     CloudService.GOOGLE_DRIVE
   );
 
@@ -89,7 +89,13 @@ function App() {
   return (
     <div className="w-[400px] h-[500px] flex flex-col bg-gray-50">
       <Header />
-      <ServiceSelector />
+      <ServiceSelector
+        selectedService={selectedService}
+        onServiceChange={setSelectedService}
+        isAuthenticated={isAuthenticated}
+        onAuthenticate={authenticate}
+        onSignOut={signOut}
+      />
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-4">
         {isLoading ? (
