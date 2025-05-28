@@ -11,6 +11,20 @@ export interface DriveFile {
   parentId?: string;
 }
 
+interface GoogleDriveFileResponse {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: string | number;
+  modifiedTime?: string;
+  iconLink?: string;
+  parents?: string[];
+}
+
+interface GoogleDriveListResponse {
+  files: GoogleDriveFileResponse[];
+}
+
 class GoogleDriveService {
   private baseUrl = "https://www.googleapis.com/drive/v3";
 
@@ -51,14 +65,15 @@ class GoogleDriveService {
         throw new Error(`Failed to fetch files: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as GoogleDriveListResponse;
 
       // Transform the response into our DriveFile format
-      return data.files.map((file: any) => ({
+      return data.files.map((file: GoogleDriveFileResponse) => ({
         id: file.id,
         name: file.name,
         mimeType: file.mimeType,
-        size: file.size,
+        size:
+          typeof file.size === "string" ? parseInt(file.size, 10) : file.size,
         modifiedTime: file.modifiedTime,
         iconLink: file.iconLink,
         isFolder: file.mimeType === "application/vnd.google-apps.folder",
@@ -139,12 +154,13 @@ class GoogleDriveService {
         );
       }
 
-      const data = await response.json();
-      return data.files.map((file: any) => ({
+      const data = (await response.json()) as GoogleDriveListResponse;
+      return data.files.map((file: GoogleDriveFileResponse) => ({
         id: file.id,
         name: file.name,
         mimeType: file.mimeType,
-        size: file.size,
+        size:
+          typeof file.size === "string" ? parseInt(file.size, 10) : file.size,
         modifiedTime: file.modifiedTime,
         iconLink: file.iconLink,
         isFolder: file.mimeType === "application/vnd.google-apps.folder",
