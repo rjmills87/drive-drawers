@@ -1,15 +1,12 @@
-import { rootFiles } from "../data/mockData";
+import type { DriveFile } from "../services/googleDriveServices";
 import FileItem from "./FileItem";
 
 type FileListProps = {
-  files?: { id: string; name: string; type: string }[];
-  onFolderClick?: (folderName: string) => void;
+  files: DriveFile[];
+  onFolderClick?: (folderId: string, folderName: string) => void;
 };
 
-export default function FileList({
-  files = rootFiles,
-  onFolderClick,
-}: FileListProps) {
+export default function FileList({ files = [], onFolderClick }: FileListProps) {
   return (
     <div className="space-y-2">
       {files.map((file) => (

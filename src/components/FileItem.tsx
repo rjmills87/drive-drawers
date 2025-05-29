@@ -1,16 +1,14 @@
+import type { DriveFile } from "../services/googleDriveServices";
+
 type FileItemProps = {
-  file: {
-    id: string;
-    name: string;
-    type: string;
-  };
-  onFolderClick?: (folderName: string) => void;
+  file: DriveFile;
+  onFolderClick?: (folderId: string, folderName: string) => void;
 };
 
 export default function FileItem({ file, onFolderClick }: FileItemProps) {
   const handleClick = () => {
-    if (file.type === "folder" && onFolderClick) {
-      onFolderClick(file.name);
+    if (file.isFolder && onFolderClick) {
+      onFolderClick(file.id, file.name);
     }
   };
 
@@ -20,7 +18,7 @@ export default function FileItem({ file, onFolderClick }: FileItemProps) {
       onClick={handleClick}
     >
       <div className="mr-3">
-        {file.type === "folder" ? (
+        {file.isFolder ? (
           <svg
             className="w-5 h-5 text-yellow-500"
             fill="currentColor"

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { getFilesForPath } from "./data/mockData";
 import { MessageType, CloudService } from "./constants";
 import Header from "./components/Header";
+import googleDriveService from "./services/googleDriveServices";
+import type { DriveFile } from "./services/googleDriveServices";
 import ServiceSelector from "./components/ServiceSelector";
 import ActionBar from "./components/ActionBar";
 import FileList from "./components/FileList";
@@ -15,13 +16,48 @@ function App() {
   const [selectedService, setSelectedService] = useState<string>(
     CloudService.GOOGLE_DRIVE
   );
+  const [files, setFiles] = useState<DriveFile[]>([]);
+  const [currentFolderId, setCurrentFolderId] = useState<string>("root");
 
-  const navigateToFolder = (folderName: string) => {
-    setCurrentPath(folderName);
+  const fetchFiles = async () => {
+    // If not authenticated, clear files and return
+    if (!isAuthenticated) {
+      setFiles([]);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const files = await googleDriveService.listFiles(currentFolderId);
+      setFiles(files);
+    } catch (error) {
+      console.error("Failed to fetch files", error);
+      alert("Failed to fetch files");
+    }
+    setIsLoading(false);
   };
 
-  const navigateUp = () => {
-    setCurrentPath("");
+  const navigateToFolder = (folderId: string, folderName: string) => {
+    setCurrentFolderId(folderId);
+    setCurrentPath(currentPath ? `${currentPath}/${folderName}` : folderName);
+  };
+
+  const navigateUp = async () => {
+    if (currentFolderId === "root") {
+      return;
+    }
+    try {
+      const folder = await googleDriveService.getFile(currentFolderId);
+      const parentID = folder.parentId || "root";
+
+      const pathParts = currentPath.split("/");
+      pathParts.pop();
+      const newPath = pathParts.join("/");
+      setCurrentFolderId(parentID);
+      setCurrentPath(newPath);
+    } catch (error) {
+      console.error("Error navigating up", error);
+      alert("Failed to Navigate up");
+    }
   };
 
   const checkAuthStatus = async () => {
@@ -86,6 +122,12 @@ function App() {
     checkAuthStatus();
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchFiles();
+    }
+  }, [isAuthenticated, currentFolderId]);
+
   return (
     <div className="w-[400px] h-[500px] flex flex-col bg-gray-50">
       <Header />
@@ -103,10 +145,7 @@ function App() {
         ) : (
           <div className="space-y-2">
             <Breadcrumb currentPath={currentPath} onNavigateUp={navigateUp} />
-            <FileList
-              files={getFilesForPath(currentPath)}
-              onFolderClick={navigateToFolder}
-            />
+            <FileList files={files} onFolderClick={navigateToFolder} />
           </div>
         )}
       </div>
