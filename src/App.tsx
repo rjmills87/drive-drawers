@@ -114,6 +114,7 @@ function App() {
         console.error("There was an issue when trying to signout: ", error);
       } finally {
         setIsLoading(false);
+        setFiles([]);
       }
     }
   };

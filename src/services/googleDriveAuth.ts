@@ -59,8 +59,13 @@ class GoogleDriveAuthService {
 
   //   Get the current auth token
   public async getToken(): Promise<string | null> {
+    console.log("getToken: Starting token retrieval");
     // Make sure token is loaded from storage first
     await this.loadTokenFromStorage();
+    console.log(
+      "getToken: Finished loading from storage, token exists:",
+      !!this.token
+    );
 
     // Check if token exists or if token has expired.
     if (!this.token) {
@@ -68,12 +73,33 @@ class GoogleDriveAuthService {
       return null;
     }
 
+    console.log(
+      "getToken: Token expiry check - Current time:",
+      new Date(Date.now()).toISOString(),
+      "Expires at:",
+      new Date(this.token.expiresAt).toISOString()
+    );
     if (this.token.expiresAt <= Date.now()) {
       console.log("getToken: Token has expired");
       return null;
     }
 
-    console.log("getToken: Valid token returned");
+    console.log(
+      "getToken: Valid token returned, token type:",
+      typeof this.token.token
+    );
+    if (typeof this.token.token === "string") {
+      console.log("getToken: Token length:", this.token.token.length);
+      console.log(
+        "getToken: Token first 10 chars:",
+        this.token.token.substring(0, 10) + "..."
+      );
+    } else {
+      console.log(
+        "getToken: WARNING - Token is not a string:",
+        typeof this.token.token
+      );
+    }
     return this.token.token;
   }
 
@@ -125,24 +151,53 @@ class GoogleDriveAuthService {
     });
   }
 
-  //   Sign Out from Google Drive
-  public async signOut(): Promise<void> {
+  //   Sign out from Google Drive
+  public async signOut(): Promise<boolean> {
     console.log("Signing out from Google Drive");
+
     if (!this.token) {
       console.log("No token to sign out");
-      return;
+      return true;
     }
 
     const token = this.token.token;
     this.token = null;
 
     try {
+      // Clear token from storage
       await this.clearTokenFromStorage();
 
-      await fetch(`https://accounts.google.com/o/oauth2/revoke?token=${token}`);
-      console.log("Token revoked successfully");
+      // Clear token from Chrome's cache
+      await new Promise<void>((resolve) => {
+        chrome.identity.removeCachedAuthToken({ token }, () => {
+          console.log("Token removed from Chrome's cache");
+          resolve();
+        });
+      });
+
+      // Revoke the token with Google
+      try {
+        const response = await fetch(
+          `https://accounts.google.com/o/oauth2/revoke?token=${token}`
+        );
+        if (response.ok) {
+          console.log("Token revoked successfully");
+        } else {
+          console.warn(
+            "Token revocation may have failed:",
+            response.status,
+            response.statusText
+          );
+        }
+      } catch (revokeError) {
+        console.error("Error revoking token:", revokeError);
+        // Continue with sign out even if revocation fails
+      }
+
+      return true;
     } catch (error) {
       console.error("Error signing out:", error);
+      return false;
     }
   }
 

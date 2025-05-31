@@ -45,6 +45,11 @@ class GoogleDriveService {
       console.log("Getting token...");
       const token = await googleDriveAuth.getToken();
       console.log("Token received:", !!token); // Log whether token exists, not the actual token
+      console.log("Token type:", typeof token);
+      if (token) {
+        console.log("Token length:", token.length);
+        console.log("Token first 10 chars:", token.substring(0, 10) + "...");
+      }
 
       if (!token) {
         console.error("Authentication failed: No token available");
@@ -65,6 +70,10 @@ class GoogleDriveService {
       console.log("Request URL:", url);
 
       try {
+        console.log(
+          "Authorization header:",
+          `Bearer ${token.substring(0, 10)}...`
+        );
         const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
