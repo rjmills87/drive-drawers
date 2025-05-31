@@ -38,8 +38,16 @@ class GoogleDriveService {
   public async listFiles(folderId: string = "root"): Promise<DriveFile[]> {
     try {
       // Get the authentication token
+      console.log("Checking authentication status...");
+      const isAuthenticated = await googleDriveAuth.isAuthenticated();
+      console.log("Is authenticated:", isAuthenticated);
+
+      console.log("Getting token...");
       const token = await googleDriveAuth.getToken();
+      console.log("Token received:", !!token); // Log whether token exists, not the actual token
+
       if (!token) {
+        console.error("Authentication failed: No token available");
         throw new Error("Not authenticated");
       }
 
@@ -50,35 +58,48 @@ class GoogleDriveService {
       const fields = "files(id,name,mimeType,size,modifiedTime,iconLink)";
 
       // Make the API request
-      const response = await fetch(
-        `${this.baseUrl}/files?q=${encodeURIComponent(
-          query
-        )}&fields=${encodeURIComponent(fields)}&pageSize=100`,
-        {
+      console.log("Making API request to Google Drive...");
+      const url = `${this.baseUrl}/files?q=${encodeURIComponent(
+        query
+      )}&fields=${encodeURIComponent(fields)}&pageSize=100`;
+      console.log("Request URL:", url);
+
+      try {
+        const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+        });
+
+        console.log("Response status:", response.status, response.statusText);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error response:", errorText);
+          throw new Error(
+            `Failed to fetch files: ${response.status} ${response.statusText} - ${errorText}`
+          );
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch files: ${response.statusText}`);
+        const data = (await response.json()) as GoogleDriveListResponse;
+        console.log("Files received:", data.files.length);
+
+        // Transform the response into our DriveFile format
+        return data.files.map((file: GoogleDriveFileResponse) => ({
+          id: file.id,
+          name: file.name,
+          mimeType: file.mimeType,
+          size:
+            typeof file.size === "string" ? parseInt(file.size, 10) : file.size,
+          modifiedTime: file.modifiedTime,
+          iconLink: file.iconLink,
+          isFolder: file.mimeType === "application/vnd.google-apps.folder",
+          parentId: folderId !== "root" ? folderId : undefined,
+        }));
+      } catch (error) {
+        console.error("Error making API request:", error);
+        throw error;
       }
-
-      const data = (await response.json()) as GoogleDriveListResponse;
-
-      // Transform the response into our DriveFile format
-      return data.files.map((file: GoogleDriveFileResponse) => ({
-        id: file.id,
-        name: file.name,
-        mimeType: file.mimeType,
-        size:
-          typeof file.size === "string" ? parseInt(file.size, 10) : file.size,
-        modifiedTime: file.modifiedTime,
-        iconLink: file.iconLink,
-        isFolder: file.mimeType === "application/vnd.google-apps.folder",
-        parentId: folderId !== "root" ? folderId : undefined,
-      }));
     } catch (error) {
       console.error("Error listing files:", error);
       throw error;

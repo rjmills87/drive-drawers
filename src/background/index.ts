@@ -42,8 +42,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
   if (message.type === MessageType.CHECK_AUTH) {
-    const isAuthenticated = googleDriveAuth.isAuthenticated();
-    sendResponse({ isAuthenticated });
+    googleDriveAuth
+      .isAuthenticated()
+      .then((isAuthenticated) => {
+        console.log("Background: Auth check result:", isAuthenticated);
+        sendResponse({ isAuthenticated });
+      })
+      .catch((error) => {
+        console.error("Background: Auth check error:", error);
+        sendResponse({ isAuthenticated: false, error: error.message });
+      });
     return true;
   }
   if (message.type === MessageType.SIGN_OUT) {

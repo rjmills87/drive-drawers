@@ -28,7 +28,8 @@
     "client_id": "798546693028-80r9hjrtsud5b18ighq0n3fb6fcook9s.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/drive.readonly",
-      "https://www.googleapis.com/auth/drive.file"
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/drive.metadata.readonly"
     ]
   },
   "background": {
