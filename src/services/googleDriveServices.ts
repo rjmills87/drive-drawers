@@ -201,6 +201,42 @@ class GoogleDriveService {
       throw error;
     }
   }
+
+  public async getFilePreviewUrl(
+    id: string,
+    mimeType: string
+  ): Promise<string> {
+    try {
+      // Get auth token
+      const token = await googleDriveAuth.getToken();
+
+      if (!token) {
+        throw new Error("Not Authenticated");
+      }
+      // Check if file is from Google Workspace
+      if (mimeType.startsWith("application/vnd.google-apps.")) {
+        // Handle Google Workspace File formats
+        const exportFormats: Record<string, string> = {
+          "application/vnd.google-apps.document": "application/pdf",
+          "application/vnd.google-apps.spreadsheet": "application/pdf",
+          "application/vnd.google-apps.presentation": "application/pdf",
+          "application/vnd.google-apps.drawing": "image/png",
+        };
+
+        const exportFormat = exportFormats[mimeType] || "application/pdf";
+
+        return `${
+          this.baseUrl
+        }/files/${id}/export?mimeType=${encodeURIComponent(
+          exportFormat
+        )}&access_token=${token}`;
+      }
+      return `${this.baseUrl}/files/${id}?alt=media&access_token=${token}`;
+    } catch (error) {
+      console.error("Failed to retrieve file URL", error);
+      throw error;
+    }
+  }
 }
 
 const googleDriveService = new GoogleDriveService();
