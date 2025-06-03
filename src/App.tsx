@@ -8,6 +8,7 @@ import ActionBar from "./components/ActionBar";
 import FileList from "./components/FileList";
 import Loading from "./components/Loading";
 import Breadcrumb from "./components/Breadcrumb";
+import FilePreview from "./components/FilePreview";
 
 function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -18,6 +19,7 @@ function App() {
   );
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string>("root");
+  const [selectedFile, setSelectedFile] = useState<DriveFile | null>(null);
 
   const fetchFiles = async () => {
     // If not authenticated, clear files and return
@@ -119,6 +121,14 @@ function App() {
     }
   };
 
+  const handleClosePreview = () => {
+    setSelectedFile(null);
+  };
+
+  const handleFileClick = (file: DriveFile) => {
+    setSelectedFile(file);
+  };
+
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -146,11 +156,16 @@ function App() {
         ) : (
           <div className="space-y-2">
             <Breadcrumb currentPath={currentPath} onNavigateUp={navigateUp} />
-            <FileList files={files} onFolderClick={navigateToFolder} />
+            <FileList
+              files={files}
+              onFolderClick={navigateToFolder}
+              onFileClick={handleFileClick}
+            />
           </div>
         )}
       </div>
       <ActionBar />
+      <FilePreview file={selectedFile} onClose={handleClosePreview} />
     </div>
   );
 }

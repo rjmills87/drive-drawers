@@ -3,12 +3,22 @@ import type { DriveFile } from "../services/googleDriveServices";
 type FileItemProps = {
   file: DriveFile;
   onFolderClick?: (folderId: string, folderName: string) => void;
+  onFileClick: (file: DriveFile) => void;
 };
 
-export default function FileItem({ file, onFolderClick }: FileItemProps) {
+export default function FileItem({
+  file,
+  onFolderClick,
+  onFileClick,
+}: FileItemProps) {
   const handleClick = () => {
-    if (file.isFolder && onFolderClick) {
+    if (
+      file.mimeType === "application/vnd.google-apps.folder" &&
+      onFolderClick
+    ) {
       onFolderClick(file.id, file.name);
+    } else {
+      onFileClick(file);
     }
   };
 

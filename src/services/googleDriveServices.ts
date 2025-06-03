@@ -237,6 +237,79 @@ class GoogleDriveService {
       throw error;
     }
   }
+
+  async getFileForPreview(fileId: string, mimeType: string): Promise<Blob> {
+    const token = await googleDriveAuth.getToken();
+    if (!token) throw new Error("Not authenticated");
+
+    // For Google Workspace files, export them to a viewable format
+    if (mimeType.startsWith("application/vnd.google-apps.")) {
+      let exportMimeType = "application/pdf"; // Default to PDF
+
+      // Adjust export format based on file type
+      if (mimeType === "application/vnd.google-apps.spreadsheet") {
+        exportMimeType =
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      } else if (mimeType === "application/vnd.google-apps.document") {
+        exportMimeType = "application/pdf";
+      } else if (mimeType === "application/vnd.google-apps.presentation") {
+        exportMimeType = "application/pdf";
+      } else if (mimeType === "application/vnd.google-apps.drawing") {
+        exportMimeType = "image/png";
+      }
+
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${encodeURIComponent(
+          exportMimeType
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to export file: ${response.status}`);
+      }
+
+      return await response.blob();
+    } else {
+      // For regular files, download directly
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.status}`);
+      }
+
+      return await response.blob();
+    }
+  }
+
+  async getViewerUrl(fileId: string, mimeType: string): Promise<string> {
+    if (mimeType.startsWith("application/vnd.google-apps.")) {
+      // For Google Docs, use the native viewer
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    } else if (mimeType === "application/pdf") {
+      // For PDFs, use Google Drive's PDF viewer directly
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    } else {
+      // For other files, use Google Docs Viewer
+      const token = await googleDriveAuth.getToken();
+      if (!token) throw new Error("Not authenticated");
+      const downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&access_token=${token}`;
+      return `https://docs.google.com/viewer?url=${encodeURIComponent(
+        downloadUrl
+      )}&embedded=true`;
+    }
+  }
 }
 
 const googleDriveService = new GoogleDriveService();

@@ -24,6 +24,9 @@
     "https://*.microsoft.com/*",
     "https://*.dropboxapi.com/*"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-src https://*.googleapis.com https://*.google.com;"
+  },
   "oauth2": {
     "client_id": "798546693028-80r9hjrtsud5b18ighq0n3fb6fcook9s.apps.googleusercontent.com",
     "scopes": [
