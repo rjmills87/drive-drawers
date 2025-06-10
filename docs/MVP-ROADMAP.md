@@ -17,8 +17,8 @@ This roadmap outlines the development phases for the Drive Drawers Chrome extens
 - [x] Create service for fetching files and folders from Google Drive
 - [x] Build UI components to display files and folders
 - [x] Implement file navigation (browsing folders)
-- [ ] Add basic file operations (view, download)
-- [ ] Create file preview functionality
+- [x] Add basic file operations (view, download)
+- [x] Create file preview functionality
 
 ## Phase 3: Enhanced Google Drive Features
 
