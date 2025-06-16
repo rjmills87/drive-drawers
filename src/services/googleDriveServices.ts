@@ -310,6 +310,79 @@ class GoogleDriveService {
       )}&embedded=true`;
     }
   }
+
+  async uploadFile(file: File, folderId: string = "root"): Promise<DriveFile> {
+    try {
+      const isAuthenticated = await googleDriveAuth.isAuthenticated();
+      const token = await googleDriveAuth.getToken();
+
+      if (!isAuthenticated || !token) {
+        throw new Error("Not authenticated");
+      }
+      const boundary = "boundary" + Math.random().toString().slice(2);
+      const delimiter = `--${boundary}`;
+      const closeDelimiter = `--${boundary}--`;
+
+      // Create the multipart request body
+      let requestBody = "";
+      requestBody += delimiter + "\r\n";
+      requestBody += "Content-Type: application/json; charset=UTF-8\r\n\r\n";
+      requestBody +=
+        JSON.stringify({
+          name: file.name,
+          mimeType: file.type || "application/octet-stream",
+          parents: [folderId],
+        }) + "\r\n";
+
+      requestBody += delimiter + "\r\n";
+      requestBody += `Content-Type: ${
+        file.type || "application/octet-stream"
+      }\r\n\r\n`;
+
+      // Convert the text parts to a blob and combine with the file
+      const requestBodyBlob = new Blob([requestBody]);
+      const fileBlob = new Blob([file]);
+      const endBlob = new Blob(["\r\n" + closeDelimiter]);
+
+      // Combine all parts into one blob
+      const multipartRequestBody = new Blob(
+        [requestBodyBlob, fileBlob, endBlob],
+        { type: "multipart/related; boundary=" + boundary }
+      );
+
+      const response = await fetch(
+        `${this.baseUrl}/files?uploadType=multipart`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": `multipart/related; boundary=${boundary}`,
+          },
+          body: multipartRequestBody,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to upload file: ${response.statusText}`);
+      }
+
+      // Get the file ID from the response
+      const data = await response.json();
+      return {
+        id: data.id,
+        name: data.name,
+        mimeType: data.mimeType,
+        size: data.size,
+        modifiedTime: data.modifiedTime,
+        iconLink: data.iconLink,
+        isFolder: data.mimeType === "application/vnd.google-apps.folder",
+        parentId: folderId !== "root" ? folderId : undefined,
+      };
+    } catch (error) {
+      console.error("Failed to upload file", error);
+      throw error;
+    }
+  }
 }
 
 const googleDriveService = new GoogleDriveService();
