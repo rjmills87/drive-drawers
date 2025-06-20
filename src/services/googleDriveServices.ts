@@ -313,74 +313,227 @@ class GoogleDriveService {
 
   async uploadFile(file: File, folderId: string = "root"): Promise<DriveFile> {
     try {
+      console.log("[UPLOAD] Starting file upload process...");
+      console.log("[UPLOAD] File details:", {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
+
       const isAuthenticated = await googleDriveAuth.isAuthenticated();
       const token = await googleDriveAuth.getToken();
 
       if (!isAuthenticated || !token) {
         throw new Error("Not authenticated");
       }
-      const boundary = "boundary" + Math.random().toString().slice(2);
-      const delimiter = `--${boundary}`;
-      const closeDelimiter = `--${boundary}--`;
 
-      // Create the multipart request body
-      let requestBody = "";
-      requestBody += delimiter + "\r\n";
-      requestBody += "Content-Type: application/json; charset=UTF-8\r\n\r\n";
-      requestBody +=
-        JSON.stringify({
-          name: file.name,
-          mimeType: file.type || "application/octet-stream",
-          parents: [folderId],
-        }) + "\r\n";
+      console.log("[UPLOAD] Authentication verified");
 
-      requestBody += delimiter + "\r\n";
-      requestBody += `Content-Type: ${
-        file.type || "application/octet-stream"
-      }\r\n\r\n`;
+      // Return a promise that will be resolved when the upload is complete
+      return new Promise((resolve, reject) => {
+        try {
+          // Step 1: Create the file with metadata
+          console.log("[UPLOAD] Step 1: Creating file metadata");
 
-      // Convert the text parts to a blob and combine with the file
-      const requestBodyBlob = new Blob([requestBody]);
-      const fileBlob = new Blob([file]);
-      const endBlob = new Blob(["\r\n" + closeDelimiter]);
+          const metadata: {
+            name: string;
+            mimeType: string;
+            parents?: string[];
+          } = {
+            name: file.name,
+            mimeType: file.type || "application/octet-stream",
+          };
 
-      // Combine all parts into one blob
-      const multipartRequestBody = new Blob(
-        [requestBodyBlob, fileBlob, endBlob],
-        { type: "multipart/related; boundary=" + boundary }
-      );
+          if (folderId !== "root") {
+            metadata.parents = [folderId];
+          }
 
-      const response = await fetch(
-        `${this.baseUrl}/files?uploadType=multipart`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": `multipart/related; boundary=${boundary}`,
-          },
-          body: multipartRequestBody,
+          console.log("[UPLOAD] Metadata:", metadata);
+
+          const xhr1 = new XMLHttpRequest();
+          xhr1.open("POST", "https://www.googleapis.com/drive/v3/files");
+          xhr1.setRequestHeader("Authorization", `Bearer ${token}`);
+          xhr1.setRequestHeader("Content-Type", "application/json");
+
+          xhr1.onreadystatechange = function () {
+            console.log("[UPLOAD] Metadata XHR state change:", {
+              readyState: this.readyState,
+              status: this.status,
+            });
+
+            if (this.readyState === 4) {
+              console.log("[UPLOAD] Metadata response:", this.responseText);
+            }
+          };
+
+          xhr1.onload = function () {
+            if (this.status >= 200 && this.status < 300) {
+              try {
+                console.log("[UPLOAD] Metadata creation successful");
+                const fileData = JSON.parse(this.responseText);
+                console.log("[UPLOAD] File created with ID:", fileData.id);
+
+                // Step 2: Upload the content
+                console.log("[UPLOAD] Step 2: Uploading file content");
+                const xhr2 = new XMLHttpRequest();
+                const uploadUrl = `https://www.googleapis.com/upload/drive/v3/files/${fileData.id}?uploadType=media`;
+                console.log("[UPLOAD] Upload URL:", uploadUrl);
+
+                xhr2.open("PATCH", uploadUrl);
+                xhr2.setRequestHeader("Authorization", `Bearer ${token}`);
+                xhr2.setRequestHeader(
+                  "Content-Type",
+                  file.type || "application/octet-stream"
+                );
+
+                xhr2.onreadystatechange = function () {
+                  console.log("[UPLOAD] Content XHR state change:", {
+                    readyState: this.readyState,
+                    status: this.status,
+                  });
+
+                  if (this.readyState === 4) {
+                    console.log(
+                      "[UPLOAD] Content response:",
+                      this.responseText
+                    );
+                  }
+                };
+
+                xhr2.upload.onprogress = (event) => {
+                  if (event.lengthComputable) {
+                    const percentComplete = (event.loaded / event.total) * 100;
+                    console.log(
+                      `[UPLOAD] Content upload progress: ${percentComplete.toFixed(
+                        2
+                      )}%`
+                    );
+                  }
+                };
+
+                xhr2.onload = function () {
+                  if (this.status >= 200 && this.status < 300) {
+                    try {
+                      console.log("[UPLOAD] Content upload successful");
+                      const data = JSON.parse(this.responseText);
+                      console.log(
+                        "[UPLOAD] File content uploaded successfully:",
+                        data
+                      );
+
+                      resolve({
+                        id: data.id || fileData.id,
+                        name: data.name || fileData.name,
+                        mimeType: data.mimeType || fileData.mimeType,
+                        size: data.size || file.size,
+                        modifiedTime:
+                          data.modifiedTime || new Date().toISOString(),
+                        iconLink: data.iconLink || "",
+                        isFolder:
+                          (data.mimeType || fileData.mimeType) ===
+                          "application/vnd.google-apps.folder",
+                        parentId: folderId !== "root" ? folderId : undefined,
+                      });
+                    } catch (e) {
+                      console.error(
+                        "[UPLOAD] Error parsing content response:",
+                        e
+                      );
+                      console.log(
+                        "[UPLOAD] Raw response text:",
+                        this.responseText
+                      );
+
+                      // Even if we can't parse the response, the upload might have succeeded
+                      // Let's use the metadata we already have
+                      resolve({
+                        id: fileData.id,
+                        name: fileData.name,
+                        mimeType: fileData.mimeType,
+                        size: file.size,
+                        modifiedTime: new Date().toISOString(),
+                        iconLink: "",
+                        isFolder:
+                          fileData.mimeType ===
+                          "application/vnd.google-apps.folder",
+                        parentId: folderId !== "root" ? folderId : undefined,
+                      });
+                    }
+                  } else {
+                    console.error(
+                      "[UPLOAD] Content upload failed with status:",
+                      this.status
+                    );
+                    console.error("[UPLOAD] Response:", this.responseText);
+                    reject(
+                      new Error(`Content upload failed: ${this.statusText}`)
+                    );
+                  }
+                };
+
+                xhr2.onerror = function (e) {
+                  console.error(
+                    "[UPLOAD] Network error during content upload:",
+                    e
+                  );
+                  reject(new Error("Network error during content upload"));
+                };
+
+                // Send the file content
+                console.log("[UPLOAD] Sending file content...");
+                xhr2.send(file);
+              } catch (e) {
+                console.error("[UPLOAD] Error parsing metadata response:", e);
+                reject(new Error("Invalid metadata response format"));
+              }
+            } else {
+              console.error(
+                "[UPLOAD] Metadata creation failed with status:",
+                this.status
+              );
+              console.error("[UPLOAD] Response:", this.responseText);
+              reject(new Error(`Metadata creation failed: ${this.statusText}`));
+            }
+          };
+
+          xhr1.onerror = function (e) {
+            console.error(
+              "[UPLOAD] Network error during metadata creation:",
+              e
+            );
+            reject(new Error("Network error during metadata creation"));
+          };
+
+          // Send the metadata request
+          console.log("[UPLOAD] Sending metadata request...");
+          xhr1.send(JSON.stringify(metadata));
+        } catch (e) {
+          console.error("[UPLOAD] Unexpected error in upload process:", e);
+          reject(e);
         }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to upload file: ${response.statusText}`);
-      }
-
-      // Get the file ID from the response
-      const data = await response.json();
-      return {
-        id: data.id,
-        name: data.name,
-        mimeType: data.mimeType,
-        size: data.size,
-        modifiedTime: data.modifiedTime,
-        iconLink: data.iconLink,
-        isFolder: data.mimeType === "application/vnd.google-apps.folder",
-        parentId: folderId !== "root" ? folderId : undefined,
-      };
+      });
     } catch (error) {
-      console.error("Failed to upload file", error);
+      console.error("[UPLOAD] Failed to upload file", error);
       throw error;
+    }
+  }
+
+  async testUpload() {
+    try {
+      console.log("Uploading test file...");
+      const testContent =
+        "This is a test file created at " + new Date().toISOString();
+      const testBlob = new Blob([testContent], { type: "text/plain" });
+      const testFile = new File([testBlob], "test-upload.txt", {
+        type: "text/plain",
+      });
+      console.log("Test file created");
+      const file = await this.uploadFile(testFile, "root");
+      console.log("File uploaded successfully");
+      return file;
+    } catch (error) {
+      console.error("Failed to upload test file", error);
+      return null;
     }
   }
 }
