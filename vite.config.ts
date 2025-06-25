@@ -32,6 +32,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         options: resolve(__dirname, "options.html"),
+        uploadWindow: resolve(__dirname, "upload-window.html"),
         background: resolve(__dirname, "src/background/index.ts"),
         content: resolve(__dirname, "src/content/index.ts"),
       },

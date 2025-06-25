@@ -17,7 +17,13 @@
       "128": "icons/icon128.png"
     }
   },
-  "permissions": ["storage", "identity", "contextMenus", "activeTab"],
+  "permissions": [
+    "storage",
+    "identity",
+    "contextMenus",
+    "activeTab",
+    "windows"
+  ],
   "host_permissions": [
     "https://*.google.com/*",
     "https://*.googleapis.com/*",
