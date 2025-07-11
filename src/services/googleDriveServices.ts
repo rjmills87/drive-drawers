@@ -311,7 +311,11 @@ class GoogleDriveService {
     }
   }
 
-  async uploadFile(file: File, folderId: string = "root"): Promise<DriveFile> {
+  async uploadFile(
+    file: File,
+    folderId: string = "root",
+    options?: { onProgress?: (progress: number) => void }
+  ): Promise<DriveFile> {
     try {
       console.log("[UPLOAD] Starting file upload process...");
       console.log("[UPLOAD] File details:", {
@@ -408,6 +412,7 @@ class GoogleDriveService {
                         2
                       )}%`
                     );
+                    options?.onProgress?.(percentComplete);
                   }
                 };
 

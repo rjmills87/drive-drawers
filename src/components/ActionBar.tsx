@@ -1,27 +1,50 @@
-import googleDriveService from "../services/googleDriveServices";
+import { useEffect } from "react";
 
 interface ActionBarProps {
   onFileUploaded?: () => void;
+  currentFolderId?: string;
 }
 
-export default function ActionBar({ onFileUploaded }: ActionBarProps) {
-  const handleTestUpload = async () => {
-    try {
-      console.log("Uploading test file...");
-      const file = await googleDriveService.testUpload();
-      console.log("File uploaded successfully");
+export default function ActionBar({
+  onFileUploaded,
+  currentFolderId = "root",
+}: ActionBarProps) {
+  // Open the upload window
+  const openUploadWindow = () => {
+    const uploadWindowUrl = chrome.runtime.getURL(
+      `upload-window.html?folderId=${currentFolderId}`
+    );
 
-      // Call the callback to refresh file list if provided
-      if (onFileUploaded) {
-        onFileUploaded();
-      }
-
-      return file;
-    } catch (error) {
-      console.error("Failed to upload test file", error);
-      return null;
-    }
+    chrome.windows.create({
+      url: uploadWindowUrl,
+      type: "popup",
+      width: 500,
+      height: 400,
+    });
   };
+
+  // Listen for messages from the upload window
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Check if the message is from our upload window
+      if (
+        event.data &&
+        event.data.type === "UPLOAD_COMPLETE" &&
+        event.data.success
+      ) {
+        console.log("Received upload complete message");
+        // Call the callback to refresh file list if provided
+        if (onFileUploaded) {
+          onFileUploaded();
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [onFileUploaded]);
 
   return (
     <div className="bg-gray-100 p-3 border-t flex justify-end space-x-2">
@@ -29,7 +52,7 @@ export default function ActionBar({ onFileUploaded }: ActionBarProps) {
         New Folder
       </button>
       <button
-        onClick={handleTestUpload}
+        onClick={openUploadWindow}
         className="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700"
       >
         Upload File

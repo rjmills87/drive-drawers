@@ -164,7 +164,10 @@ function App() {
           </div>
         )}
       </div>
-      <ActionBar onFileUploaded={fetchFiles} />
+      <ActionBar
+        onFileUploaded={fetchFiles}
+        currentFolderId={currentFolderId}
+      />
       <FilePreview file={selectedFile} onClose={handleClosePreview} />
     </div>
   );

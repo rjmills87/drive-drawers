@@ -1,8 +1,24 @@
 import "../upload-window/UploadWindowApp.css";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import googleDriveService from "../services/googleDriveServices";
 
 export default function UploadWindow() {
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [uploadStatus, setUploadStatus] = useState<
+    "idle" | "uploading" | "success" | "error"
+  >("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [folderId, setFolderId] = useState<string>("root");
+
+  // Extract folder ID from URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const folderIdParam = params.get("folderId");
+    if (folderIdParam) {
+      setFolderId(folderIdParam);
+    }
+  }, []);
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -29,7 +45,9 @@ export default function UploadWindow() {
 
     // Handle Dropped files
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      console.log(e.dataTransfer.files);
+      Array.from(e.dataTransfer.files).forEach((file) => {
+        handleUpload(file);
+      });
     }
   };
 
@@ -42,7 +60,36 @@ export default function UploadWindow() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      console.log(e.target.files);
+      Array.from(e.target.files).forEach((file) => {
+        handleUpload(file);
+      });
+    }
+  };
+
+  const handleUpload = async (file: File) => {
+    setUploadStatus("uploading");
+    setUploadProgress(0);
+    setError(null);
+    try {
+      const uploadedFile = await googleDriveService.uploadFile(file, folderId, {
+        onProgress: (progress) => setUploadProgress(progress),
+      });
+      console.log("File Upload Successful", uploadedFile);
+      setUploadStatus("success");
+
+      // Notify the parent window that the upload is complete
+      if (window.opener) {
+        window.opener.postMessage(
+          { type: "UPLOAD_COMPLETE", success: true, file: uploadedFile },
+          "*"
+        );
+      }
+
+      return uploadedFile;
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Upload failed");
+      setUploadStatus("error");
+      console.error("Error uploading files", error);
     }
   };
 
@@ -57,7 +104,42 @@ export default function UploadWindow() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {isDragging ? "Drop Files Here" : "Drag & Drop Files Here"}
+        {uploadStatus === "idle" ? (
+          // Show the drag and drop text when idle
+          isDragging ? (
+            "Drop Files Here"
+          ) : (
+            "Drag & Drop Files Here"
+          )
+        ) : (
+          // Show upload status when not idle
+          <div className="w-full flex flex-col items-center">
+            {/* Progress bar when uploading */}
+            {uploadStatus === "uploading" && (
+              <>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                  <div
+                    className="bg-teal-600 h-2.5 rounded-full"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <p className="text-gray-700">
+                  Uploading... {uploadProgress.toFixed(0)}%
+                </p>
+              </>
+            )}
+
+            {/* Success message */}
+            {uploadStatus === "success" && (
+              <p className="text-green-600">Upload successful!</p>
+            )}
+
+            {/* Error message */}
+            {uploadStatus === "error" && (
+              <p className="text-red-600">Upload failed: {error}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <input
