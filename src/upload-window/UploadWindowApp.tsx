@@ -93,8 +93,25 @@ export default function UploadWindow() {
     }
   };
 
+  const handleCloseWindow = () => {
+    window.close();
+  };
+
   return (
     <div className="flex flex-col gap-4 items-center justify-center h-screen w-screen bg-gray-100">
+      <div
+        aria-label="Close Window"
+        onClick={() => {
+          if (uploadStatus === "uploading") {
+            return;
+          } else {
+            handleCloseWindow();
+          }
+        }}
+        className="cursor-pointer absolute top-4 right-4 bg-gray-600 p-0 rounded-full h-8 w-8 flex justify-center items-center transform duration-300 hover:bg-red-500"
+      >
+        <span className="text-xl text-white">X</span>
+      </div>
       <div
         className={`flex items-center justify-center h-72 w-128 p-4 rounded border-2 border-dashed ${
           isDragging ? "border-teal-500 bg-teal-50" : "border-gray-300"
