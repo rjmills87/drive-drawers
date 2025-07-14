@@ -1,0 +1,10 @@
+export default SidePanel() {
+    return (
+        <>
+        <h1>
+        Side Panel
+        </h1>
+
+        </>
+    )
+}

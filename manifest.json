@@ -22,7 +22,8 @@
     "identity",
     "contextMenus",
     "activeTab",
-    "windows"
+    "windows",
+    "sidePanel"
   ],
   "host_permissions": [
     "https://*.google.com/*",

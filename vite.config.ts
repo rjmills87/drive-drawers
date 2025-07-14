@@ -33,6 +33,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         options: resolve(__dirname, "options.html"),
         uploadWindow: resolve(__dirname, "upload-window.html"),
+        sidePanel: resolve(__dirname, "side-panel.html"),
         background: resolve(__dirname, "src/background/index.ts"),
         content: resolve(__dirname, "src/content/index.ts"),
       },
