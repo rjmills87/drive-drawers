@@ -20,6 +20,19 @@ This roadmap outlines the development phases for the Drive Drawers Chrome extens
 - [x] Add basic file operations (view, download)
 - [x] Create file preview functionality
 
+## Phase 2.5: Sidebar Overlay Implementation
+
+- [ ] Update manifest.json with necessary permissions for content script injection
+- [ ] Create message types for sidebar communication in constants.ts
+- [ ] Implement SidebarOverlay class in content script to inject overlay UI
+- [ ] Add toggle functionality to show/hide sidebar with smooth animations
+- [ ] Update background script to handle sidebar toggle messages
+- [ ] Adapt SidePanelApp to work within the sidebar iframe context
+- [ ] Implement state persistence for sidebar visibility
+- [ ] Add close button and UI controls for sidebar management
+- [ ] Ensure sidebar works consistently across different websites
+- [ ] Test sidebar with file browsing and authentication functionality
+
 ## Phase 3: Enhanced Google Drive Features
 
 - [ ] Implement drag-and-drop from browser to Google Drive
